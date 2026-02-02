@@ -133,8 +133,14 @@ func (h *requestHandler) ServeHTTP(writer http.ResponseWriter, request *http.Req
 
 	if !h.config.IsPaddingValid(paddingValue, validRange.From, validRange.To, PaddingMethod(h.config.XPaddingMethod)) {
 		errors.LogInfo(context.Background(), "invalid padding ("+paddingPlacement+") length:", int32(len(paddingValue)))
-		writer.WriteHeader(http.StatusBadRequest)
-		return
+
+		// ======= Begin Mod ========
+
+		// writer.WriteHeader(http.StatusBadRequest)
+		// return
+
+		// ======= End Mod ========
+
 	}
 
 	sessionId, seqStr := h.config.ExtractMetaFromRequest(request, h.path)
