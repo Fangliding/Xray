@@ -4,9 +4,11 @@
 
 ## modded
 
-allowInsecure
+加回 allowInsecure
 
 XHTTP 无需 padding
+
+移除使用 VMESS 等功能时乱七八糟的 deprecated 警告
 
 ## maybe in the future
 
