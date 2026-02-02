@@ -18,6 +18,7 @@ import (
 	"github.com/xtls/xray-core/common/ocsp"
 	"github.com/xtls/xray-core/common/platform/filesystem"
 	"github.com/xtls/xray-core/common/protocol/tls/cert"
+	"github.com/xtls/xray-core/mod"
 	"github.com/xtls/xray-core/transport/internet"
 )
 
@@ -389,6 +390,16 @@ func (c *Config) GetTLSConfig(opts ...Option) *tls.Config {
 		SessionTicketsDisabled: !c.EnableSessionResumption,
 		VerifyPeerCertificate:  randCarrier.verifyPeerCert,
 	}
+
+	// ======== Begin Mod =========
+
+	allowInsecure, _ := mod.AccessDataFromProto[bool](c, "AllowInsecure")
+	if allowInsecure {
+		config.InsecureSkipVerify = true
+	}
+
+	// ======== End Mod =========
+
 	randCarrier.Config = config
 	if len(c.VerifyPeerCertByName) > 0 {
 		config.InsecureSkipVerify = true
