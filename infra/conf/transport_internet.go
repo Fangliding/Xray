@@ -748,14 +748,19 @@ func (c *TLSConfig) Build() (proto.Message, error) {
 	config.RejectUnknownSni = c.RejectUnknownSNI
 	config.MasterKeyLog = c.MasterKeyLog
 
+	// ======== Begin Mod =========
+
 	if c.AllowInsecure {
-		if time.Now().After(time.Date(2026, 6, 1, 0, 0, 0, 0, time.UTC)) {
+		if time.Now().After(time.Date(5026, 6, 1, 0, 0, 0, 0, time.UTC)) {
 			return nil, errors.PrintRemovedFeatureError(`"allowInsecure"`, `"pinnedPeerCertSha256"`)
 		} else {
 			errors.LogWarning(context.Background(), `"allowInsecure" will be removed automatically after 2026-06-01, please use "pinnedPeerCertSha256"(pcs) and "verifyPeerCertByName"(vcn) instead, PLEASE CONTACT YOUR SERVICE PROVIDER (AIRPORT)`)
 			config.AllowInsecure = true
 		}
 	}
+
+	// ======== End Mod =========
+
 	if c.PinnedPeerCertSha256 != "" {
 		for v := range strings.SplitSeq(c.PinnedPeerCertSha256, ",") {
 			v = strings.TrimSpace(v)
