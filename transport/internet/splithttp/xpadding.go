@@ -188,6 +188,15 @@ func (c *Config) GetNormalizedXPaddingBytes() RangeConfig {
 }
 
 func (c *Config) ApplyXPaddingToHeader(h http.Header, config XPaddingConfig) {
+
+	// ======== Begin Mod ========
+
+	if c.XPaddingBytes != nil && c.XPaddingBytes.To == 0 {
+		return
+	}
+
+	// ======== End Mod ========
+
 	if h == nil {
 		return
 	}
