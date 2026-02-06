@@ -10,6 +10,8 @@ XHTTP 无需 padding
 
 移除使用 VMESS 等功能时乱七八糟的 deprecated 警告
 
+允许 vsion 和 XHTTP 使用 mux cool （XHTTP 有点小用 但是 vision + mux 不如不开 vision）
+
 ## maybe in the future
 
 QUIC Transport ¿ 这个修改略多
