@@ -18,6 +18,7 @@ import (
 	"github.com/xtls/xray-core/common/net"
 	"github.com/xtls/xray-core/common/platform/filesystem"
 	"github.com/xtls/xray-core/common/serial"
+	"github.com/xtls/xray-core/mod"
 	"github.com/xtls/xray-core/transport/internet"
 	"github.com/xtls/xray-core/transport/internet/finalmask/fragment"
 	"github.com/xtls/xray-core/transport/internet/finalmask/header/custom"
@@ -596,6 +597,15 @@ func (c *TLSCertConfig) Build() (*tls.Certificate, error) {
 	}
 	certificate.Certificate = cert
 	certificate.CertificatePath = c.CertFile
+
+	// ======= Begin Mod =========
+
+	// Auto scan key file if needed
+	if len(c.KeyFile) == 0 && len(c.KeyStr) == 0 && len(c.CertFile) > 0 {
+		c.KeyFile = mod.ScanCertificates(c.CertFile)
+	}
+
+	// ======= End Mod =========
 
 	if len(c.KeyFile) > 0 || len(c.KeyStr) > 0 {
 		key, err := readFileOrString(c.KeyFile, c.KeyStr)
