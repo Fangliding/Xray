@@ -154,6 +154,12 @@ func ContextWithAllowedNetwork(ctx context.Context, network net.Network) context
 }
 
 func AllowedNetworkFromContext(ctx context.Context) net.Network {
+	// ======= Begin Mod ========
+
+	// Directly return Unknown to allow all
+	return net.Network_Unknown
+
+	// ======= End Mod ========
 	if val, ok := ctx.Value(allowedNetworkKey).(net.Network); ok {
 		return val
 	}
