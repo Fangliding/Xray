@@ -1,0 +1,103 @@
+name: Build Simple Binary
+
+on:
+  workflow_dispatch:
+    inputs:
+      targets:
+        description: 'Target combinations'
+        required: true
+        default: 'windows-amd64, linux-amd64, linux-arm64'
+      commit_id:
+        description: 'Commit ID'
+        required: false
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Set build matrix
+        id: set-matrix
+        run: |
+          TARGETS_INPUT="${{ github.event.inputs.targets || 'windows-amd64, linux-amd64, linux-arm64' }}"
+          
+          # Convert to matrix JSON
+          MATRIX='{"include":['
+          FIRST=true
+          
+          IFS=',' read -ra TARGETS_ARRAY <<< "$TARGETS_INPUT"
+          for target in "${TARGETS_ARRAY[@]}"; do
+            target=$(echo "$target" | xargs) # trim whitespace
+            if [[ -z "$target" ]]; then continue; fi
+            
+            # Split by hyphen: linux-amd64 -> goos: linux, goarch: amd64
+            goos="${target%-*}"
+            goarch="${target##*-}"
+            
+            if [ "$FIRST" = true ]; then
+              FIRST=false
+            else
+              MATRIX+=','
+            fi
+            MATRIX+="{\"goos\":\"$goos\",\"goarch\":\"$goarch\"}"
+          done
+          MATRIX+=']}'
+          
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+          echo "Generated matrix: $MATRIX"
+
+  build:
+    needs: prepare
+    permissions:
+      contents: write
+    strategy:
+      matrix: ${{ fromJson(needs.prepare.outputs.matrix) }}
+      fail-fast: false
+
+    runs-on: ubuntu-latest
+    env:
+      GOOS: ${{ matrix.goos }}
+      GOARCH: ${{ matrix.goarch }}
+      CGO_ENABLED: 0
+    steps:
+      - name: Checkout codebase
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.inputs.commit_id || github.sha }}
+          fetch-depth: 0
+
+      - name: Show workflow information
+        run: |
+          echo "GOOS: $GOOS, GOARCH: $GOARCH"
+          BASE_NAME="xray-$GOOS-$GOARCH"
+          echo "ARTIFACT_NAME=$BASE_NAME" >> $GITHUB_ENV
+          if [[ "$GOOS" == "windows" ]]; then
+            echo "BINARY_NAME=${BASE_NAME}.exe" >> $GITHUB_ENV
+          else
+            echo "BINARY_NAME=${BASE_NAME}" >> $GITHUB_ENV
+          fi
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          check-latest: true
+
+      - name: Get project dependencies
+        run: go mod download
+
+      - name: Build Xray
+        run: |
+          COMMID=$(git describe --always --dirty)
+          echo "Building Xray for $GOOS-$GOARCH..."
+          go build -o ${{ env.BINARY_NAME }} -trimpath -ldflags="-X github.com/xtls/xray-core/core.build=${COMMID} -s -w -buildid=" -v ./main
+
+      - name: Upload files to Artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ${{ env.BINARY_NAME }}
