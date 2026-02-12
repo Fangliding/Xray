@@ -18,6 +18,7 @@ import (
 	"github.com/xtls/xray-core/common/platform/filesystem"
 	"github.com/xtls/xray-core/common/serial"
 	"github.com/xtls/xray-core/mod"
+	"github.com/xtls/xray-core/mod/quic"
 	"github.com/xtls/xray-core/transport/internet"
 	"github.com/xtls/xray-core/transport/internet/finalmask/header/dns"
 	"github.com/xtls/xray-core/transport/internet/finalmask/header/dtls"
@@ -1105,10 +1106,12 @@ func (p TransportProtocol) Build() (string, error) {
 		return "httpupgrade", nil
 	case "h2", "h3", "http":
 		return "", errors.PrintRemovedFeatureError("HTTP transport (without header padding, etc.)", "XHTTP stream-one H2 & H3")
-	case "quic":
-		return "", errors.PrintRemovedFeatureError("QUIC transport (without web service, etc.)", "XHTTP stream-one H3")
 	case "hysteria":
 		return "hysteria", nil
+	// ======= Begin Mod ========
+	case "quic":
+		return "quic", nil
+	// ======= End Mod ========
 	default:
 		return "", errors.New("Config: unknown transport protocol: ", p)
 	}
@@ -1441,6 +1444,23 @@ type FinalMask struct {
 	Udp []Mask `json:"udp"`
 }
 
+// ======= Begin Mod ========
+
+// All of settings seems be removed, emmmmm
+type QUICConfig struct {
+	// Header   json.RawMessage `json:"header"`
+	// Security string `json:"security"`
+	// Key      string `json:"key"`
+}
+
+// Build implements Buildable.
+func (c *QUICConfig) Build() (proto.Message, error) {
+	config := &quic.Config{}
+	return config, nil
+}
+
+// ======= End Mod ========
+
 type StreamConfig struct {
 	Address             *Address           `json:"address"`
 	Port                uint16             `json:"port"`
@@ -1459,6 +1479,9 @@ type StreamConfig struct {
 	HTTPUPGRADESettings *HttpUpgradeConfig `json:"httpupgradeSettings"`
 	HysteriaSettings    *HysteriaConfig    `json:"hysteriaSettings"`
 	SocketSettings      *SocketConfig      `json:"sockopt"`
+	// ======= Begin Mod ========
+	QUICSettings *QUICConfig `json:"quicSettings"`
+	// ======= End Mod ========
 }
 
 // Build implements Buildable.
@@ -1612,6 +1635,19 @@ func (c *StreamConfig) Build() (*internet.StreamConfig, error) {
 			config.Udpmasks = append(config.Udpmasks, serial.ToTypedMessage(u))
 		}
 	}
+
+	// ======= Begin Mod ========
+	if c.QUICSettings != nil {
+		qs, err := c.QUICSettings.Build()
+		if err != nil {
+			return nil, errors.New("Failed to build QUIC config.").Base(err)
+		}
+		config.TransportSettings = append(config.TransportSettings, &internet.TransportConfig{
+			ProtocolName: "quic",
+			Settings:     serial.ToTypedMessage(qs),
+		})
+	}
+	// ======= End Mod ========
 
 	return config, nil
 }
