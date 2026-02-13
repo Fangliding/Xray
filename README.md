@@ -23,6 +23,8 @@ XHTTP 无需 padding
 
 QUIC 传输 使用 BBR 拥塞控制 但是伪装删完了（建议去用 UDP Mask）
 
+ECH 默认 full 模式 有 ECH Config 强制启用 之前默认情况下查询失败会把你原 SNI 直接泄露出去你敢信？
+
 ## maybe in the future
 
 裁剪 core 现在核心越来越大一个 看起来还要引入乐色依赖 但是裁剪可能有些麻烦 除非直接删掉 但那太极端了 自己删是个不错的选择 我可能会偶尔在分支推送一些自己删掉的版本 主要拿 wireguard 和 tun 开刀（gvisor 是垃圾大头）

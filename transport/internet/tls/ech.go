@@ -53,7 +53,12 @@ func ApplyECH(c *Config, config *tls.Config) error {
 		switch ECHForceQuery {
 		case "none", "half", "full":
 		case "":
-			ECHForceQuery = "none" // default to none
+
+			// ======== Begin Mod ========
+
+			ECHForceQuery = "full" // default to full
+
+			// ======== End Mod ========
 		default:
 			panic("Invalid ECHForceQuery: " + c.EchForceQuery)
 		}
