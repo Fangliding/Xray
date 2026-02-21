@@ -10,6 +10,7 @@ import (
 	utls "github.com/refraction-networking/utls"
 	"github.com/xtls/xray-core/common/buf"
 	"github.com/xtls/xray-core/common/net"
+	"github.com/xtls/xray-core/common/utils"
 )
 
 type Interface interface {
@@ -97,6 +98,16 @@ func (c *UConn) WebsocketHandshakeContext(ctx context.Context) error {
 	if err := c.BuildHandshakeState(); err != nil {
 		return err
 	}
+
+	// ======== Begin Mod ========
+
+	config := *utils.AccessField[*utls.Config](c, "config")
+	if config.EncryptedClientHelloConfigList != nil {
+		return c.HandshakeContext(ctx)
+	}
+
+	// ======== End Mod ========
+
 	// Iterate over extensions and check for utls.ALPNExtension
 	hasALPNExtension := false
 	for _, extension := range c.Extensions {
@@ -130,8 +141,10 @@ func GeneraticUClient(c net.Conn, config *tls.Config) *utls.UConn {
 	return utls.UClient(c, copyConfig(config), utls.HelloChrome_Auto)
 }
 
+// ======== Begin Mod ========
+
 func copyConfig(c *tls.Config) *utls.Config {
-	return &utls.Config{
+	config := &utls.Config{
 		Rand:                           c.Rand,
 		RootCAs:                        c.RootCAs,
 		ServerName:                     c.ServerName,
@@ -140,7 +153,13 @@ func copyConfig(c *tls.Config) *utls.Config {
 		KeyLogWriter:                   c.KeyLogWriter,
 		EncryptedClientHelloConfigList: c.EncryptedClientHelloConfigList,
 	}
+	if config.EncryptedClientHelloConfigList != nil {
+		config.NextProtos = c.NextProtos
+	}
+	return config
 }
+
+// ======== End Mod ========
 
 func init() {
 	bigInt, _ := rand.Int(rand.Reader, big.NewInt(int64(len(ModernFingerprints))))
