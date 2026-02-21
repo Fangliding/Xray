@@ -11,6 +11,8 @@
 
 如果证书只填了证书文件路径 没填私钥文件路径文件 自动在同文件夹下扫描匹配的私钥文件 非常不安全 非常好用（我实在懒得把路径复制一遍然后把 fullchain.cer 改成 xxx.key）
 
+实验性：如果启用了 ECH 和 utls 那么 Websocket 的 Client Hello 明文 ALPN 将不再是 http/1.1 而是常见的 h2,http/1.1 真正的 ALPN 会被放在 ECH 里
+
 ## modded
 
 加回 allowInsecure
