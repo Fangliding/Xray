@@ -97,7 +97,7 @@ jobs:
           go build -o ${{ env.BINARY_NAME }} -trimpath -ldflags="-X github.com/xtls/xray-core/core.build=${COMMID} -s -w -buildid=" -v ./main
 
       - name: Upload files to Artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.ARTIFACT_NAME }}
           path: ${{ env.BINARY_NAME }}
