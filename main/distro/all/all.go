@@ -62,7 +62,9 @@ import (
 	_ "github.com/xtls/xray-core/transport/internet/websocket"
 
 	// ======= Begin Mod ========
+	_ "github.com/xtls/xray-core/mod/transport/http"
 	_ "github.com/xtls/xray-core/mod/transport/quic"
+
 	// ======= End Mod ========
 
 	// Transport headers

@@ -6,8 +6,10 @@ import (
 
 	"github.com/xtls/xray-core/common/errors"
 	"github.com/xtls/xray-core/common/serial"
+	"github.com/xtls/xray-core/mod/transport/http"
 	"github.com/xtls/xray-core/mod/transport/quic"
 	"github.com/xtls/xray-core/transport/internet"
+	httpheader "github.com/xtls/xray-core/transport/internet/headers/http"
 	"github.com/xtls/xray-core/transport/internet/hysteria/congestion/bbr"
 	"google.golang.org/protobuf/proto"
 )
@@ -32,8 +34,12 @@ func (p TransportProtocol) Build() (string, error) {
 	case "httpupgrade":
 		errors.PrintNonRemovalDeprecatedFeatureWarning("HTTPUpgrade transport (with ALPN http/1.1, etc.)", "XHTTP H2 & H3")
 		return "httpupgrade", nil
-	case "h2", "h3", "http":
-		return "", errors.PrintRemovedFeatureError("HTTP transport (without header padding, etc.)", "XHTTP stream-one H2 & H3")
+	case "h3":
+		return "", errors.PrintRemovedFeatureError("HTTP/3 transport (without header padding, etc.)", "XHTTP stream-one H3")
+	// ======= Begin Mod ========
+	case "h2", "http":
+		return "http", nil
+	// ======= End Mod ========
 	case "hysteria":
 		return "hysteria", nil
 	// ======= Begin Mod ========
@@ -60,6 +66,43 @@ func (c *QUICConfig) Build() (proto.Message, error) {
 	return config, nil
 }
 
+type HTTP2Config struct {
+	Host               StringList             `json:"host"`
+	Path               string                 `json:"path"`
+	IdleTimeout        int32                  `json:"idle_timeout"`
+	HealthCheckTimeout int32                  `json:"health_check_timeout"`
+	Method             string                 `json:"method"`
+	Headers            map[string]*StringList `json:"headers"`
+}
+
+// Build implements Buildable.
+func (c *HTTP2Config) Build() (proto.Message, error) {
+	config := &http.Config{
+		Path:               c.Path,
+		IdleTimeout:        c.IdleTimeout,
+		HealthCheckTimeout: c.HealthCheckTimeout,
+		Method:             c.Method,
+	}
+	if len(c.Host) > 0 {
+		config.Host = c.Host[0]
+	}
+	if len(c.Headers) > 0 {
+		config.Header = make([]*httpheader.Header, 0, len(c.Headers))
+		headerNames := sortMapKeys(c.Headers)
+		for _, key := range headerNames {
+			value := c.Headers[key]
+			if value == nil {
+				return nil, errors.New("empty HTTP header value: " + key).AtError()
+			}
+			config.Header = append(config.Header, &httpheader.Header{
+				Name:  key,
+				Value: append([]string(nil), (*value)...),
+			})
+		}
+	}
+	return config, nil
+}
+
 // ======= End Mod ========
 
 type StreamConfig struct {
@@ -82,7 +125,8 @@ type StreamConfig struct {
 	HysteriaSettings    *HysteriaConfig    `json:"hysteriaSettings"`
 	SocketSettings      *SocketConfig      `json:"sockopt"`
 	// ======= Begin Mod ========
-	QUICSettings *QUICConfig `json:"quicSettings"`
+	QUICSettings  *QUICConfig  `json:"quicSettings"`
+	HTTP2Settings *HTTP2Config `json:"httpSettings"`
 	// ======= End Mod ========
 }
 
@@ -339,6 +383,16 @@ func (c *StreamConfig) Build() (*internet.StreamConfig, error) {
 		config.TransportSettings = append(config.TransportSettings, &internet.TransportConfig{
 			ProtocolName: "quic",
 			Settings:     serial.ToTypedMessage(qs),
+		})
+	}
+	if c.HTTP2Settings != nil {
+		hs, err := c.HTTP2Settings.Build()
+		if err != nil {
+			return nil, errors.New("Failed to build HTTP/2 config.").Base(err)
+		}
+		config.TransportSettings = append(config.TransportSettings, &internet.TransportConfig{
+			ProtocolName: "http",
+			Settings:     serial.ToTypedMessage(hs),
 		})
 	}
 	// ======= End Mod ========
