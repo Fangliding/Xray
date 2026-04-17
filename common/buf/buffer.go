@@ -2,20 +2,29 @@ package buf
 
 import (
 	"io"
+	"sync"
 
 	"github.com/xtls/xray-core/common/bytespool"
 	"github.com/xtls/xray-core/common/errors"
 	"github.com/xtls/xray-core/common/net"
 )
 
+// ======== Begin Mod ========
+
 const (
 	// Size of a regular buffer.
-	Size = 8192
+	Size = 16384
 )
 
 var ErrBufferFull = errors.New("buffer is full")
 
-var pool = bytespool.GetPool(Size)
+var pool = sync.Pool{
+	New: func() any {
+		return make([]byte, Size)
+	},
+}
+
+// ======== End Mod ========
 
 // ownership represents the data owner of the buffer.
 type ownership uint8
