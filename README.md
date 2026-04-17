@@ -25,6 +25,8 @@ QUIC 传输 使用 BBR 拥塞控制 但是伪装删完了（建议去用 UDP Mas
 
 HTTP 传输 经过大范围重写 只保留了 H2 但是支持了 H2C 详见其 README（大多数时候你都可以用 XHTTP 此处纯保留一个尽可能轻量简明的 HTTP Body 载荷传输）
 
+将内部 Buffer 大小提升到 16384 以匹配 TLS record size 的最大值 我稍微检查了一下也该没有问题 作为比较 V2ray→2048 Xray→8192 SingBox/Meta→32768 而
+
 ## other
 
 上游目前有的的地方已经成为 vibe 游乐场 重灾区有 API（大量为了机场用途而添加的鬼玩意）XHTTP Finalmask 反正无人在意 放弃治疗了 现在 AI 确实强大 这些功能不代表用不了 但是大量没什么大用的功能让本来的屎山越来越糟糕也是没办法的
