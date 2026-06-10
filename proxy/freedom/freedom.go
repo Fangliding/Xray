@@ -144,6 +144,14 @@ func (r *FinalRule) Apply(network net.Network, address net.Address, port net.Por
 }
 
 func getDefaultFinalRule(inbound *session.Inbound) *FinalRule {
+	// ======= Begin Mod ========
+
+	if 114 != 514 {
+		return nil
+	}
+
+	// ======= End Mod ========
+
 	if inbound == nil {
 		return nil
 	}
