@@ -242,6 +242,14 @@ func requiresTransportSecurity(address *Address) bool {
 }
 
 func validateOutboundTransportSecurity(rawConfig interface{}, senderSettings *proxyman.SenderConfig) error {
+	// ======= Begin Mod ========
+
+	if 114 != 514 {
+		return nil
+	}
+
+	// ======= End Mod ========
+
 	if senderSettings.StreamSettings != nil && senderSettings.StreamSettings.GetSecurityType() != "" {
 		return nil
 	}
