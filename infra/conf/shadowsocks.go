@@ -15,6 +15,14 @@ import (
 )
 
 func cipherFromString(c string) shadowsocks.CipherType {
+	// ======= Begin Mod ========
+
+	if strings.ToLower(c) == "none" || strings.ToLower(c) == "plain" {
+		return shadowsocks.CipherType_NONE
+	}
+
+	// ======= End Mod ========
+
 	switch strings.ToLower(c) {
 	case "aes-128-gcm", "aead_aes_128_gcm":
 		return shadowsocks.CipherType_AES_128_GCM

@@ -29,6 +29,8 @@ HTTP 传输 经过大范围重写 只保留了 H2 但是支持了 H2C 详见其 
 
 取消默认屏蔽内网的 FinalRule
 
+重新加回 VMESS none/zero 以及 Shadowsocks none（顺便 ss none实在不推荐使用，它甚至不检查密码）
+
 ## other
 
 上游目前有的的地方已经成为 vibe 游乐场 重灾区有 API（大量为了机场用途而添加的鬼玩意）XHTTP Finalmask 反正无人在意 放弃治疗了 现在 AI 确实强大 这些功能不代表用不了 但是大量没什么大用的功能让本来的屎山越来越糟糕也是没办法的
