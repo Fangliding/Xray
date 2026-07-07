@@ -93,3 +93,19 @@ func (sc *SecurityConfig) GetSecurityType() SecurityType {
 func isDomainTooLong(domain string) bool {
 	return len(domain) > 256
 }
+
+// ======= Begin Mod ========
+
+const (
+	SecurityType_NONE SecurityType = 5
+	SecurityType_ZERO SecurityType = 6
+)
+
+func init() {
+	SecurityType_name[int32(SecurityType_NONE)] = "NONE"
+	SecurityType_name[int32(SecurityType_ZERO)] = "ZERO"
+	SecurityType_value["NONE"] = int32(SecurityType_NONE)
+	SecurityType_value["ZERO"] = int32(SecurityType_ZERO)
+}
+
+// ======= End Mod ========

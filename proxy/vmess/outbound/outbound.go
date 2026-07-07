@@ -105,6 +105,14 @@ func (h *Handler) Process(ctx context.Context, link *transport.Link, dialer inte
 	account := request.User.Account.(*vmess.MemoryAccount)
 	request.Security = account.Security
 
+	// ======= Begin Mod ========
+
+	if request.Security == protocol.SecurityType_NONE {
+		request.Option.Set(protocol.RequestOptionChunkMasking)
+	}
+
+	// ======= End Mod ========
+
 	if request.Security == protocol.SecurityType_AES128_GCM || request.Security == protocol.SecurityType_CHACHA20_POLY1305 {
 		request.Option.Set(protocol.RequestOptionChunkMasking)
 	}
@@ -112,6 +120,16 @@ func (h *Handler) Process(ctx context.Context, link *transport.Link, dialer inte
 	if shouldEnablePadding(request.Security) && request.Option.Has(protocol.RequestOptionChunkMasking) {
 		request.Option.Set(protocol.RequestOptionGlobalPadding)
 	}
+
+	// ======= Begin Mod ========
+
+	if request.Security == protocol.SecurityType_ZERO {
+		request.Security = protocol.SecurityType_NONE
+		request.Option.Clear(protocol.RequestOptionChunkStream)
+		request.Option.Clear(protocol.RequestOptionChunkMasking)
+	}
+
+	// ======= End Mod ========
 
 	if account.AuthenticatedLengthExperiment {
 		request.Option.Set(protocol.RequestOptionAuthenticatedLength)

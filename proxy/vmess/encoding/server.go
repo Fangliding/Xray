@@ -261,6 +261,26 @@ func (s *ServerSession) DecodeRequestBody(request *protocol.RequestHeader, reade
 		}
 	}
 
+	// ======= Begin Mod ========
+
+	if request.Security == protocol.SecurityType_NONE {
+		if request.Option.Has(protocol.RequestOptionChunkStream) {
+			if request.Command.TransferType() == protocol.TransferTypeStream {
+				return crypto.NewChunkStreamReader(sizeParser, reader), nil
+			}
+
+			auth := &crypto.AEADAuthenticator{
+				AEAD:                    new(NoOpAuthenticator),
+				NonceGenerator:          crypto.GenerateEmptyBytes(),
+				AdditionalDataGenerator: crypto.GenerateEmptyBytes(),
+			}
+			return crypto.NewAuthenticationReader(auth, sizeParser, reader, protocol.TransferTypePacket, padding), nil
+		}
+		return buf.NewReader(reader), nil
+	}
+
+	// ======= End Mod ========
+
 	switch request.Security {
 	case protocol.SecurityType_AES128_GCM:
 		aead := crypto.NewAesGcm(s.requestBodyKey[:])
@@ -367,6 +387,26 @@ func (s *ServerSession) EncodeResponseBody(request *protocol.RequestHeader, writ
 			return nil, errors.New("invalid option: RequestOptionGlobalPadding")
 		}
 	}
+
+	// ======= Begin Mod ========
+
+	if request.Security == protocol.SecurityType_NONE {
+		if request.Option.Has(protocol.RequestOptionChunkStream) {
+			if request.Command.TransferType() == protocol.TransferTypeStream {
+				return crypto.NewChunkStreamWriter(sizeParser, writer), nil
+			}
+
+			auth := &crypto.AEADAuthenticator{
+				AEAD:                    new(NoOpAuthenticator),
+				NonceGenerator:          crypto.GenerateEmptyBytes(),
+				AdditionalDataGenerator: crypto.GenerateEmptyBytes(),
+			}
+			return crypto.NewAuthenticationWriter(auth, sizeParser, writer, protocol.TransferTypePacket, padding), nil
+		}
+		return buf.NewWriter(writer), nil
+	}
+
+	// ======= End Mod ========
 
 	switch request.Security {
 	case protocol.SecurityType_AES128_GCM:

@@ -60,6 +60,14 @@ func createXChaCha20Poly1305(key []byte) cipher.AEAD {
 }
 
 func (a *Account) getCipher() (Cipher, error) {
+	// ======= Begin Mod ========
+
+	if a.CipherType == CipherType_NONE {
+		return NoneCipher{}, nil
+	}
+
+	// ======= End Mod ========
+
 	switch a.CipherType {
 	case CipherType_AES_128_GCM:
 		return &AEADCipher{
@@ -183,6 +191,39 @@ func (c *AEADCipher) DecodePacket(key []byte, b *buf.Buffer) error {
 	b.Resize(ivLen, int32(len(bbb)))
 	return nil
 }
+
+// ======= Begin Mod ========
+
+// NoneCipher 与 CipherType_NONE 是上游 #6303 删除的 shadowsocks "none"/"plain" 明文方式，这里恢复。
+// CipherType_NONE 未写回生成的 config.pb.go，仅作数值比较/序列化用。
+
+type NoneCipher struct{}
+
+func (NoneCipher) KeySize() int32 { return 0 }
+func (NoneCipher) IVSize() int32  { return 0 }
+func (NoneCipher) IsAEAD() bool {
+	return false
+}
+
+func (NoneCipher) NewDecryptionReader(key []byte, iv []byte, reader io.Reader) (buf.Reader, error) {
+	return buf.NewReader(reader), nil
+}
+
+func (NoneCipher) NewEncryptionWriter(key []byte, iv []byte, writer io.Writer) (buf.Writer, error) {
+	return buf.NewWriter(writer), nil
+}
+
+func (NoneCipher) EncodePacket(key []byte, b *buf.Buffer) error {
+	return nil
+}
+
+func (NoneCipher) DecodePacket(key []byte, b *buf.Buffer) error {
+	return nil
+}
+
+const CipherType_NONE CipherType = 9
+
+// ======= End Mod ========
 
 func passwordToCipherKey(password []byte, keySize int32) []byte {
 	key := make([]byte, 0, keySize)
