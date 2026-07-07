@@ -34,6 +34,16 @@ func (a *VMessAccount) Build() *vmess.Account {
 	default:
 		st = protocol.SecurityType_AUTO
 	}
+
+	// ======= Begin Mod ========
+
+	if strings.ToLower(a.Security) == "none" {
+		st = protocol.SecurityType_NONE
+	} else if strings.ToLower(a.Security) == "zero" {
+		st = protocol.SecurityType_ZERO
+	}
+
+	// ======= End Mod ========
 	return &vmess.Account{
 		Id: a.ID,
 		SecuritySettings: &protocol.SecurityConfig{
