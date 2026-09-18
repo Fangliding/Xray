@@ -122,7 +122,13 @@ func (r *ReadVReader) readMulti() (MultiBuffer, error) {
 // ReadMultiBuffer implements Reader.
 func (r *ReadVReader) ReadMultiBuffer() (MultiBuffer, error) {
 	if r.alloc.Current() == 1 {
-		b, err := ReadBuffer(r.Reader)
+
+		// ======= Begin Mod ========
+
+		b, err := lazyAllocReadBuffer(r.Reader, r.rawConn)
+
+		// ======= End Mod ========
+
 		if b.IsFull() {
 			r.alloc.Adjust(1)
 		}
